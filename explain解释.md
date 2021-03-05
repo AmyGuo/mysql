@@ -1,0 +1,40 @@
+
+#### explain详解
+1. 我们经常使用explain这个命令来查看一些sql语句的执行计划，查看该sql语句有没有使用索引，有没有进行全表扫描。
+2. 通过执行计划可以深入了解mysql的基于开销的优化器，可以知道当运行sql语句时哪种策略预计会被优化器采用。
+
+##### 1. id是sql执行的顺序的标识，sql从大到小的执行
+- id相同时，执行顺序由上至下
+- 如果是子查询，id的序号会递增，id值越大优先级越高，越先被执行
+- id如果相同，可以认为是一组，从上往下顺序执行，在所有组中，id值越大，优先级越高，越先执行
+##### 2. select_type 是查询中每个select子句的类型
+- SIMPLE， 简单select，不适用union或者子查询等。
+- PRIMARY ，查询中若包含任何复杂的子部分，最外层的select被标记为PRIMARY
+- UNION， UNION中的第二个后者后面的select语句
+- DEPENDENT UNION， UNION中的第二个或后面的select语句，取决于外面的查询
+- UNION RESULT， UNION的结果
+- SUBQUERY，子查询中的第一个select
+- DEPENDENT SUBQUERY，子查询中的第一个select，取决于外面的查询
+- DERIVED，派生表的select，from子句的子查询
+- UNCACHEABLE SUBQUERY，一个子查询的结果不能被缓存，必须重新评估外连接的第一行
+##### 3. type表示mysql在表中找到所需行的方式，又称访问类型，常用的类型有：ALL,index,range,ref,eq_ref,const,system,NULL(性能从左到右，从差到好)
+- ALL，full table scan,遍历全表来找到匹配的行
+- index：full index scan,index和all区别为index类型只遍历索引树。
+- range：只检索给定范围的行，使用一个索引来选择行
+- ref：表示上述表的连接匹配条件，即哪些列或者常量被用于查找索引列上的值
+- eq_ref：类似ref，区别就在使用的索引是唯一索引，对于每个索引键值，表中只有一条记录匹配，简单来说，就是多表连接中使用primary key 或者unique key作为关联条件（此类型通常出现在多表的join查询，表示对于前表的每一个结果，都只能匹配到后表的一行结果，并且查询的比较通常都是等号，查询效率高）
+- const,system：当mysql对查询某部分进行优化，并转换为一个常量是，使用这些类型方位，如将主键放置于where列表。
+
+##### 4. possible_key指出mysql能使用哪个索引在表中找到记录，查询设计到的字段上若存在索引，则该索引将被列出，但不一定被查询使用。该列完全独立于explain输出所示的表的次序，这意味着在possible_key中的某些键实际上不能按生成的表次序使用。如果该列是NULL，则没有相关的索引，在这种情况下，可以通过检查where子句看是否他引用某些列或者合适索引的列来提高性能查询，如果是这样，创造一个适当的索引并且再用次explain来检查查询。
+##### 5. key:此次查询中确切使用到的索引
+##### 6. ref:哪个字段或常数与key一起被使用
+##### 7. row:显示查询一共扫描了多少行，这是一个预估值
+##### 8. filtered:表示此查询条件所过滤的数据的百分比
+##### 9. extra：额外的信息
+##### 10. table：查询的表名
+##### 11. partitions：匹配的分区
+
+
+
+
+  https://jingyan.baidu.com/album/f79b7cb38d8290d145023e7c.html?picindex=2
